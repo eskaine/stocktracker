@@ -6,6 +6,7 @@ var mongoose = require('mongoose');
 var socket = require('socket.io');
 
 
+
 var app = express();
 require('dotenv').load();
 
@@ -14,10 +15,24 @@ mongoose.Promise = global.Promise;
 
 app.use('/public', express.static(process.cwd() + '/public'));
 app.use('/js', express.static(process.cwd() + '/app/controllers'));
+app.use('/socket', express.static(process.cwd() + '/node_modules/socket.io-client/dist'));
 
-routes(app, socket);
+routes(app);
 
 var port = process.env.PORT || 8080;
-app.listen(port, function() {
-  console.log('Node.js listening on port ' + port + '...');
+var server = app.listen(port, function() {
+  console.log('Listening on port ' + port + '...');
+});
+
+var io = socket(server);
+io.on('connection', function(socket) {
+   console.log(socket.id + ' is connecting...'); 
+   
+   socket.on('add-stock', function(stockcode) {
+       io.sockets.emit('add-stock', stockcode);
+   });
+   
+   socket.on('del-stock', function(stockcode) {
+       io.sockets.emit('del-stock', stockcode);
+   });
 });
