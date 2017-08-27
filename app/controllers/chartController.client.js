@@ -1,66 +1,74 @@
 'use strict';
 
-(function() {
+var stockChart = (function() {
 
-    var socket = io.connect('https://stocktracker-eskaine.c9users.io/');
+    var apiUrl = appUrl + '/list';
+    var canvas = d3.select('svg');
 
-    var addButton = document.querySelector('#add-btn');
-    var input = document.querySelector('#input');
-    var stocksList = document.querySelector('#list');
-
-    function generateStockPanel(data) {
-        let panel = document.createElement('div');
-        panel.setAttribute('class', 'stock');
-        panel.setAttribute('id', data.stockcode);
-
-        let panelBody = document.createElement('div');
-        //console.log(data.stockcode);
-        panelBody.innerHTML = data.stockcode.toUpperCase();
-        
-        let close = '<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
-
-        panel.appendChild(panelBody);
-        panel.innerHTML += close;
-        stocksList.appendChild(panel);
-
-    }
-
-    function emitStockCode(emitType, emitValue) {
-        socket.emit(emitType, {
-            'stockcode': emitValue
+    function onloadGenerate(stocklist) {
+        stocklist.forEach(function(stockcode) {
+            generateStockPanel(stockcode);
         });
     }
-    
-    function delStock(data) {
-        let element = document.querySelector('#' + data.stockcode);
-        stocksList.removeChild(element);
+
+    function generateChartBase() {
+        document.querySelector('svg').innerHTML = '';
+        var chartWidth = currentWidth() - WIDTH_OFFSET;
+        var tick = monthsPerTick();
+
+        var x = d3.scaleTime()
+            .domain([new Date(oneYearAgo), new Date(currentDate)])
+            .range([0, chartWidth]);
+
+
+        var y = d3.scaleLinear()
+            .domain([MAX_STOCK_PRICE, Y_DOMAIN_OFFSET])
+            .range([0, CHART_HEIGHT - Y_RANGE_OFFSET]);
+
+        var axisX = d3.axisBottom(x)
+            .tickFormat(d3.timeFormat("%b %y"))
+            .tickSizeOuter(0)
+            .ticks(d3.timeMonth.every(tick));
+
+        var axisY = d3.axisLeft(y)
+            .tickSize(0)
+            .ticks(5);
+
+        var chart = canvas.append('g')
+            .attr('transform', 'translate(' + CHART.MARGIN.X + ',' + CHART.MARGIN.Y + ')');
+
+        var charting = chart.selectAll('line')
+            .data(chartingHeight)
+            .enter()
+            .append('line')
+            .attr('stroke', '#384d67')
+            .attr('x1', 0)
+            .attr('y1', function(d) { return d; })
+            .attr('x2', chartWidth)
+            .attr('y2', function(d) { return d; });
+
+        chart.append('g')
+            .attr('class', 'axisX')
+            .attr("transform", "translate(0," + CHART_HEIGHT + ")")
+            .call(axisX);
+
+        chart.append('g')
+            .attr('class', 'axisY')
+            .call(axisY);
     }
+   
 
-    input.addEventListener('keypress', function(e) {
-        if (e.keyCode === 13 && input.value) {
-            emitStockCode('add-stock', input.value);
-        }
-    });
+    ajaxFunctions.ready(generateChartBase);
 
-    addButton.addEventListener('click', function() {
-        if (input.value) {
-            emitStockCode('add-stock', input.value);
-        }
-    });
+    ajaxFunctions.ready(
 
-    //close stock
-    document.addEventListener('click', function(e) {
-        if (e.target.parentElement.className === 'close') {
-           emitStockCode('del-stock', e.target.parentElement.parentElement.id);
-        }
-    });
+        ajaxFunctions.ajaxRequest('GET', apiUrl, function(result) {
+            result = JSON.parse(result);
+            // console.log(result.list);
+            onloadGenerate(result.list);
+        })
+    );
 
-    socket.on('add-stock', function(stockcode) {
-        generateStockPanel(stockcode);
-    });
-    
-    socket.on('del-stock', function(stockcode) {
-        delStock(stockcode);
-    });
+    d3.select(window).on('resize', generateChartBase);
 
 })();

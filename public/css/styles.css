@@ -1,47 +1,172 @@
 body {
-    display: flex;
-    justify-content: center;
+    background-color: #384d67;
 }
 
 #app {
-    width: 60%;
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 5em;
     display: grid;
     grid-gap: 1em;
 }
 
-#chart {
-    height: 500px;
+
+.panel {
+
+    border: 0;
+    background-color: #1c324a;
 }
 
+.panel-heading {
+    background-color: #15a4fa;
 
-#add {
-    width: 20%;
-    margin: 0 auto;
-    cursor: pointer;
 }
+
+.panel-title {
+    font-size: 30px;
+    font-weight: bold;
+}
+
 
 
 #list {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-gap: 1em;
-    
+    grid-row-gap: 1em;
+    grid-column-gap: 2em;
+    grid-auto-rows: minmax(40px, auto);
+
+}
+
+/*chart*/
+
+
+.svg {
+    width: 100%;
+    height: 450px;
 }
 
 
-/*stock panel*/
+.axisX line{
+    stroke: #384d67;
+}
+
+.axisX path{
+    stroke: #384d67;
+}
+
+.axisY {
+    stroke-opacity: 0;
+}
+
+
+
+.axisX text, .axisY text {
+    font-size: 12px;
+    fill: #15a4fa;
+}
+
+
+
+/*buttons*/
+
+#add {
+    box-sizing: border-box;
+    border-style: none;
+  height: 100%;
+    
+    cursor: pointer;
+}
+
+#input, #add-btn{
+    height: 100%;
+    border-style: none;
+    
+}
+
+#input{
+    background-color: #1c324a;
+    color: #15a4fa;
+}
+
+.error{
+    color: red;
+}
+
+#add-btn {
+    padding: 0 2em 0 2em;
+    font-weight: bold;
+    background-color: #15a4fa;
+    color: #384d67;
+}
+
+.label-text, #input {
+    text-indent: 10px;
+}
 
 .stock {
     box-sizing: border-box;
     position: relative;
     border-radius: 5px;
-    border: 1px solid black;
     padding: 10px;
-    
+    background-color: #1c324a;
+    color: #15a4fa;
+
+
 }
 
 .close {
     position: absolute;
-    top: 10px;
+    top: 8px;
     right: 10px;
+}
+
+.close-icon {
+    color: rgba(0, 0, 0, 0);
+}
+
+::-webkit-input-placeholder {
+  /* Chrome/Opera/Safari */
+  color: #384d67;
+}
+
+::-moz-placeholder {
+  /* Firefox 19+ */
+  color: #384d67;
+}
+
+:-ms-input-placeholder {
+  /* IE 10+ */
+  color: #384d67;
+}
+
+:-moz-placeholder {
+  /* Firefox 18- */
+  color: #384d67;
+}
+
+
+
+
+@media screen and (min-width: 768px) {
+
+
+    #list {
+        grid-template-columns: 1fr 1fr;
+    }
+
+}
+
+@media screen and (min-width: 992px) {
+    #app {
+        max-width: 1080px;
+    }
+
+    #list {
+        max-width: 1080px;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
 }
