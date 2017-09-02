@@ -29,7 +29,7 @@ body {
 
 
 
-#list {
+#panel-group {
     width: 100%;
     margin: 0 auto;
     padding: 0;
@@ -153,7 +153,7 @@ body {
 @media screen and (min-width: 768px) {
 
 
-    #list {
+    #panel-group {
         grid-template-columns: 1fr 1fr;
     }
 
@@ -164,9 +164,15 @@ body {
         max-width: 1080px;
     }
 
-    #list {
+    #panel-group {
         max-width: 1080px;
         grid-template-columns: 1fr 1fr 1fr;
     }
 
+}
+
+
+
+.stockitem{
+    margin: 0 auto;
 }

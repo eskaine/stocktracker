@@ -1,7 +1,6 @@
 'use strict';
 
-var path = process.cwd();
-var DataHandler = require(path + '/app/controllers/dataHandler.server.js');
+var DataHandler = require('../server/dataHandler.js');
 
 module.exports = function(app) {
     
@@ -9,10 +8,10 @@ module.exports = function(app) {
 
     app.route('/')
         .get(function(req, res) {
-            res.sendFile(path + '/public/index.html');
+            res.sendFile(process.cwd() + '/public/index.html');
         });
         
     app.route('/list')
-        .get(dataHandler.getStock);
+        .get(dataHandler.currentList);
 
 };

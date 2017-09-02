@@ -1,14 +1,12 @@
 'use strict';
 
-var path = process.cwd();
-var QueryHandler = require(path + '/app/controllers/queryHandler.server.js');
-var DataHandler = require(path + '/app/controllers/dataHandler.server.js');
+var QueryHandler = require('../server/queryHandler.js');
+var DataHandler = require('../server/dataHandler.js');
 
 module.exports = function(io, socket) {
 
     var queryHandler = new QueryHandler();
     var dataHandler = new DataHandler();
-
 
     io.on('connection', function(socket) {
         console.log(socket.id + ' connected...');
@@ -20,7 +18,7 @@ module.exports = function(io, socket) {
 
             //get query data
             .then(function fulfilled() {
-                return queryHandler.query(data.stockcode);
+                return queryHandler.queryOne(data.stockcode);
             }, function rejected(err) {
                 return Promise.reject(err);
             })

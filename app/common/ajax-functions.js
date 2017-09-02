@@ -1,15 +1,12 @@
 'use strict';
 
-var appUrl = window.location.origin;
 var ajaxFunctions = {
    ready: function ready(fn) {
-      if (typeof fn !== 'function') {
+      if (typeof fn !== 'function') 
          return;
-      }
 
-      if (document.readyState === 'complete') {
+      if (document.readyState === 'complete') 
          return fn();
-      }
 
       document.addEventListener('DOMContentLoaded', fn, false);
    },
@@ -23,7 +20,9 @@ var ajaxFunctions = {
       };
 
       xmlhttp.open(method, url, true);
-
       xmlhttp.send();
    }
 };
+
+
+module.exports = ajaxFunctions;
