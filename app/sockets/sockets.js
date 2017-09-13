@@ -11,21 +11,14 @@ module.exports = function(io, socket) {
     io.on('connection', function(socket) {
         console.log(socket.id + ' connected...');
 
-        socket.on('add', function(data) {
+        socket.on('add', function(stockcode) {
             
-            //check if data exist in database
-            dataHandler.checkStock(data.stockcode)
+            queryHandler.queryOne(stockcode)
 
-            //get query data
-            .then(function fulfilled() {
-                return queryHandler.queryOne(data.stockcode);
-            }, function rejected(err) {
-                return Promise.reject(err);
-            })
-
-            //process query data
+            //add data to database
             .then(function fulfilled(result) {
-                return dataHandler.getPastYearData(result);
+                return dataHandler.addStock(stockcode, result);
+                //dataHandler.getList();
             }, function rejected(err) {
                 if (err === 'Invalid stockcode!') {
                     socket.emit('invalid', err);
@@ -33,24 +26,24 @@ module.exports = function(io, socket) {
                 return Promise.reject(err);
             })
 
-            //emit processed data
+            //emit result
             .then(function fulfilled(result) {
-                //add stockcode to database
-                dataHandler.addStock(data.stockcode);
-                //add processed data to received emitted data
-                data.data = result;
-                
-                io.sockets.emit('add', data);
+                dataHandler.findStocks()
+                .then(function fulfilled(result){
+                    io.sockets.emit('add', result);    
+                });
             }, function(err) {
-                console.log(err);
+                if (err) throw err;
             });
 
         });
 
-        socket.on('delete', function(data) {
-            dataHandler.delStock(data.stockcode);
-            io.sockets.emit('delete', data);
+        socket.on('delete', function(stockcode) {
+            dataHandler.delStock(stockcode)
+            .then(function fulfilled(result){
+                 io.sockets.emit('delete', result);
+            });
         });
+        
     });
-
 };

@@ -12,6 +12,6 @@ module.exports = function(app) {
         });
         
     app.route('/list')
-        .get(dataHandler.currentList);
+        .get(dataHandler.requestList);
 
 };

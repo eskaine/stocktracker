@@ -1,17 +1,30 @@
 'use strict';
 
-var attr = require('./attrController');
-var constant = attr.constant;
+/*Reference
+https://bl.ocks.org/mbostock/3902569
+*/
+var tempData;
 
-var svg = d3.select('svg');
+var property = require('./attrController');
+var constant = property.constant;
+var margin = property.margin;
+
+var height = constant.CHART_HEIGHT;
+
+var svg = d3.select('svg')
+    .attr('transform', 'translate(' + margin.CHART.X + ',' + margin.CHART.Y + ')');
+
 var canvas = svg.append('g')
-    .attr('id', 'chart-group')
-    .attr('transform', 'translate(' + constant.CHART_MARGIN.X + ',' + constant.CHART_MARGIN.Y + ')');
+    .attr('transform', 'translate(' + margin.AXIS_Y + ',0)')
+    .attr('id', 'chart-group');
 
-var linegroup = '';
-var gridgroup = '';
+var tooltipGroup = svg.append('g')
+    .attr('transform', 'translate(' + margin.AXIS_Y + ',0)')
+    .attr('id', 'tooltip-group');
 
-var parseTime = d3.timeParse("%Y-%m-%d");
+var linegroup, gridgroup, scanline, overlay;
+
+var parseDate = d3.timeParse("%Y-%m-%d");
 
 var x = d3.scaleTime();
 var y = d3.scaleLinear().range([0, constant.OFFSETTED_HEIGHT]);
@@ -25,13 +38,16 @@ var axisY = d3.axisLeft(y)
     .ticks(5);
 
 var line = d3.line()
-    .x(function(d) { return x(parseTime(d.date)); })
-    .y(function(d) { return y(parseFloat(d.price)); });
+    .x(function(d) { return x(new Date(d.date)); })
+    .y(function(d) { return y(d.price); });
+
+
+var bisectDate = d3.bisector(function(d) { console.log(d); return d.date; }).left;
 
 var draw = {
-    
+
     axisX: function() {
-        let width = attr.width();
+        let width = property.width();
 
         //remove existing grid
         if (document.querySelector('#grid-group')) {
@@ -56,9 +72,9 @@ var draw = {
         }
 
         //prepare axis x 
-        x.domain([new Date(attr.oneYearAgo()), new Date(attr.currentDate())])
+        x.domain([property.oneYearAgo(), property.currentDate()])
             .range([0, width]);
-        axisX.ticks(d3.timeMonth.every(attr.monthsPerTick()));
+        axisX.ticks(d3.timeMonth.every(property.monthsPerTick()));
 
         //draw axis x
         canvas.append('g')
@@ -67,15 +83,34 @@ var draw = {
             .call(axisX);
     },
 
-    axisY: function(max, min) {
-        y.domain([max, min]);
-
+    axisY: function() {
+        y.domain([property.priceCap(), property.priceOffset()]);
         canvas.append('g')
             .attr('class', 'axisY')
-            .attr("transform", "translate(" + constant.AXIS_Y_MARGIN + ",0)")
+            .attr("transform", "translate(" + margin.AXIS_Y_TEXT + ",0)")
             .call(axisY);
     },
-    
+
+    checkAxisY: function(data) {
+        //get highest price in data
+        let newMax = d3.max(data);
+        newMax = parseFloat(newMax.price);
+
+        let currentMaxPrice = parseFloat(property.getMaxPrice());
+
+        //determine if axis y needs to be redraw
+        if (newMax > currentMaxPrice) {
+            property.setMaxPrice(newMax);
+
+            if (document.querySelector('.axisY')) {
+                let cY = document.querySelector('.axisY');
+                document.querySelector('#chart-group').removeChild(cY);
+            }
+
+            this.axisY();
+        }
+    },
+
     //draw chart without data
     baseChart: function() {
         linegroup = canvas.append('g')
@@ -84,61 +119,155 @@ var draw = {
         gridgroup = canvas.append('g')
             .attr('id', 'grid-group');
 
+        //draw vertical line
+        scanline = tooltipGroup.append('line')
+            .attr('class', 'scanline')
+            .attr('x1', 0)
+            .attr('y1', 0)
+            .attr('x2', 0)
+            .attr('y2', height);
+
+        //set overlay
+        overlay = tooltipGroup.append('rect')
+            .attr('class', 'overlay')
+            .attr('width', property.width())
+            .attr('height', height)
+
+
+
+        overlay.on('mouseover', function(d) {
+                tooltipGroup.selectAll('.focus')
+                    .style('opacity', 1);
+                scanline.style('opacity', 1);
+            })
+
+            .on('mousemove', function(d) {
+                let width_automargin = (screen.width - parseInt(d3.select('#chart').style('width'), 10)) / 2;
+                let x_pos = d3.event.pageX - margin.CHART.X - width_automargin - margin.AXIS_Y;
+                scanline
+                    .attr('x1', x_pos)
+                    .attr('x2', x_pos);
+                //console.log('mouse move');
+                //console.log(d);
+                if (sessionStorage.keys) {
+                    console.log('bisecting');
+                    let keys = JSON.parse(sessionStorage.keys);
+                    let mouse = d3.mouse(this)[0];
+                    // console.log(mouse);
+                    keys.forEach(function(key) {
+
+                        let data = JSON.parse(sessionStorage[key]);
+
+                        d3.json(data, function(err, result) {
+                            //console.log(result[0]);
+                            // console.log(typeof data[0].date);
+                            var x0 = x.invert(mouse);
+                            //var i = bisectDate(data, x0, 1),
+                            var i = d3.bisectLeft(result, new Date(x0).toISOString(), 1),
+                                d0 = result[i - 1],
+                                d1 = result[i],
+                                d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+
+
+                            console.log(x0);
+                            console.log(i);
+                            console.log(d0);
+                            tooltipGroup.select('#' + key + '_FOCUS')
+                                .attr("transform", "translate(" + x(d.date) + "," + y(d.price) + ")");
+                        });
+
+
+
+
+                    });
+                }
+            })
+            .on('mouseout', function(d) {
+                tooltipGroup.selectAll('.focus')
+                    .style('opacity', 0);
+                scanline.style('opacity', 0);
+            });
+
+
+
+
+
+
         //draw axis
-        this.axisX();;
-        this.axisY(attr.priceCap(), attr.priceOffset());
+        this.axisX();
+        this.axisY();
     },
 
-    stock: function(stockcode, data) {
-        if (document.querySelector('#' + stockcode + '_CHART')) {
-            let linechart = document.querySelector('#' + stockcode + '_CHART');
+/*
+    stock: function(dataset) {
+        
+        this.checkY(dataset[0].data);
+
+        if (document.querySelector('#' + dataset.stockcode + '_CHART')) {
+            let linechart = document.querySelector('#' + dataset.stockcode + '_CHART');
             document.querySelector('#line-group').removeChild(linechart);
         }
 
         linegroup.append("path")
-            .datum(data)
-            .attr('id', stockcode + '_CHART')
-            .attr('class', 'stockitem')
-            .attr("fill", "none")
-            .attr("stroke", "steelblue")
-            .attr("stroke-linejoin", "round")
-            .attr("stroke-linecap", "round")
-            .attr("stroke-width", 1.5)
+            .datum(dataset[0].data)
+            .attr('id', dataset.stockcode + '_CHART')
+            .attr('class', 'line')
             .attr('d', line);
-    },
 
-     stocks: function() {
-       if (sessionStorage.keys) {
-            let keys = JSON.parse(sessionStorage.keys);
-            for (var i = 0, n = keys.length; i < n; i++) {
-                let key = keys[i];
-                let data = JSON.parse(sessionStorage[key]);
-                this.stock(key, data);
-            }
+
+        /*
+                if (!document.querySelector('#' + stockcode + '_FOCUS')) {
+                    tooltipGroup.append('g')
+                        .attr('id', stockcode + '_FOCUS')
+                        .attr('class', 'focus')
+                        .append('circle');
+                }
+        */
+
+    /*},*/
+
+
+    lineChart: function(dataset) {
+        var datasets;
+
+        if (dataset) {
+            //store data for resize purposes
+            tempData = dataset;
+            datasets = d3.nest().entries(dataset);
         }
-    },
-
-    //draw data
-    chartData: function(data) {
-        let newMax = d3.max(data);
-        newMax = parseFloat(newMax.price);
-
-        let currentMaxPrice = parseFloat(attr.getMaxPrice());
-
-        if (newMax > currentMaxPrice) {
-            attr.setMaxPrice(newMax);
-
-            if (document.querySelector('.axisY')) {
-                let cY = document.querySelector('.axisY');
-                document.querySelector('#chart-group').removeChild(cY);
-            }
-
-            this.axisY(attr.priceCap(), attr.priceOffset());
+        else {
+            datasets = d3.nest().entries(tempData);
         }
-        this.stocks();
+
+        //clear existing line
+        if (document.querySelector('#line-group').hasChildNodes()) {
+            document.querySelector('#line-group').innerHTML = '';
+        }
+
+        //draw line chart
+        if (datasets) {
+            var paths = linegroup.selectAll('.stockitem').data(datasets);
+            paths.enter().append("path")
+                .datum(function(d) {
+                    //redraw axis y if necessary
+                    draw.checkAxisY(d.data);
+                    return d;
+                })
+                .attr('id', function(d) {
+                    return d._id + '_CHART';
+                })
+                .attr('class', 'line')
+                .attr('d', function(d) {
+                    return line(d.data);
+                });
+        }
     }
 
+
+
 };
+
+
 
 
 module.exports = draw;

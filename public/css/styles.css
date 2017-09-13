@@ -27,6 +27,9 @@ body {
     font-weight: bold;
 }
 
+.panel-body {
+    padding: 0;
+}
 
 
 #panel-group {
@@ -48,7 +51,17 @@ body {
     height: 450px;
 }
 
+.line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
 
+
+
+/*axes*/
 .axisX line{
     stroke: #384d67;
 }
@@ -66,6 +79,47 @@ body {
 .axisX text, .axisY text {
     font-size: 12px;
     fill: #15a4fa;
+}
+
+
+/*tooltip*/
+.overlay{
+    fill: none;
+    pointer-events: all;
+}
+
+.scanline{
+    stroke: #15a4fa;
+    stroke-width: 2;
+    opacity: 0;
+}
+
+.focus{
+    
+    opacity: 0;
+}
+
+.focus circle{
+    r: 5;
+}
+
+#tooltip {
+    width: 200px;
+    height: 100px;
+    z-index: 10px;
+    position: absolute;
+    border-radius: 10px;
+    border: 1px solid white;
+    background-color: black;
+    opacity: 0;
+}
+
+.tooltip-text{
+    color: red;
+}
+
+#highlight {
+    z-index: 10px;
 }
 
 
@@ -173,6 +227,3 @@ body {
 
 
 
-.stockitem{
-    margin: 0 auto;
-}

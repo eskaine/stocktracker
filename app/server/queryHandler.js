@@ -4,42 +4,22 @@ var request = require('request');
 var api = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=';
 
 function queryHandler() {
-    var qhThis = this;
-
-    qhThis.queryOne = function(param) {
+   
+    this.queryOne = function(param) {
 
         return new Promise(function(resolve, reject) {
             let query = api + param + '&outputsize=full' + '&apikey=' + process.env.FINANCE_APIKEY;
-
             request(query, function(err, response, body) {
                 if (err) throw err;
-
                 body = JSON.parse(body);
                 
-                if (body.hasOwnProperty('Meta Data')) {
+                if (body.hasOwnProperty('Meta Data')) 
                     resolve(body);
-                }
-                else {
+                else 
                     reject('Invalid stockcode!');
-                }
-
             });
         });
-    }
-
-    qhThis.queryMany = function(params) {
-        return new Promise(function(resolve, reject) {
-            
-            var promises = [];
-            
-            params.forEach(function(param, i) {
-                promises.push(qhThis.queryOne(param));
-
-                if (i === params.length - 1) {
-                    resolve(Promise.all(promises));
-                }
-            });
-        });
+        
     }
     
 }
