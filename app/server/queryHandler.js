@@ -9,6 +9,7 @@ function queryHandler() {
 
         return new Promise(function(resolve, reject) {
             let query = api + param + '&outputsize=full' + '&apikey=' + process.env.FINANCE_APIKEY;
+            
             request(query, function(err, response, body) {
                 if (err) throw err;
                 body = JSON.parse(body);

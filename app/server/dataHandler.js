@@ -10,14 +10,12 @@ function dataHandler() {
     let This = this;
 
     this.requestList = function(req, res) {
-        console.log('requesting');
         let currentDate = new Date().toDateString();
         currentDate = new Date(currentDate);
 
         function sendList(res) {
-            This.findStocks()
+            This.findStock()
                 .then(function fulfilled(result) {
-                    console.log('send 2');
                     if (result.length === 0) {
                         res.json();
                     }
@@ -27,7 +25,6 @@ function dataHandler() {
                 });
         }
 
-
         //check for outdated data
         Stock.find({ 'updated': { $lt: currentDate } }, { '__v': 0, 'data': 0 })
             .exec(function(err, result) {
@@ -35,7 +32,6 @@ function dataHandler() {
 
                 //send if data is updated
                 if (result.length === 0) {
-                    console.log('r send');
                     sendList(res);
                 }
 
@@ -43,17 +39,21 @@ function dataHandler() {
                 else {
                     updateList(result, 0, res)
                         .then(function fulfilled(result) {
-                            console.log('r send 2');
                             sendList(res);
                         });
                 }
             });
     }
 
-
-    this.findStocks = function() {
+    this.findStock = function(stockcode) {
         return new Promise(function(resolve, reject) {
-            Stock.find({}, { '__v': 0, 'updated': 0 })
+            let params = {};
+
+            if (stockcode) {
+                params._id = stockcode;
+            }
+
+            Stock.find(params, { '__v': 0, 'updated': 0 })
                 .exec(function(err, result) {
                     if (err) throw err;
 
@@ -61,7 +61,6 @@ function dataHandler() {
                 });
         });
     }
-
 
     this.addStock = function(stockcode, data) {
         return new Promise(function(resolve, reject) {
@@ -78,17 +77,13 @@ function dataHandler() {
         });
     }
 
-
     this.delStock = function(stockcode) {
         return new Promise(function(resolve) {
             Stock.deleteOne({ '_id': stockcode })
-                .exec(function(err, result2) {
+                .exec(function(err) {
                     if (err) throw err;
 
-                    This.findStocks()
-                        .then(function fulfilled(result) {
-                            return resolve(result);
-                        });
+                    resolve();
                 });
         });
 
@@ -99,13 +94,16 @@ function dataHandler() {
 module.exports = dataHandler;
 
 function processStockData(dataset) {
+
+    dataset = dataset['Time Series (Daily)'];
+
     let arr = [];
 
-    var oneYearAgo = new Date();
+    var oneYearAgo = new Date(Object.keys(dataset)[0]);
     oneYearAgo = (oneYearAgo.getFullYear() - 1) + '-' + (oneYearAgo.getMonth() + 1) + '-' + oneYearAgo.getDate();
     oneYearAgo = new Date(oneYearAgo);
 
-    for (var data in dataset['Time Series (Daily)']) {
+    for (var data in dataset) {
         let dateStr = data;
         let date = data;
         if (data.length > 10) {
@@ -115,8 +113,11 @@ function processStockData(dataset) {
         }
 
         let d = {};
-        d.date = new Date(dateStr);
-        d.price = dataset['Time Series (Daily)'][data]['4. close'];
+
+        d.date = new Date(dateStr).toISOString();
+        d.date = d.date.split('T');
+        d.date = d.date[0];
+        d.price = dataset[data]['4. close'];
         arr.push(d);
 
         date = new Date(date);
@@ -127,7 +128,6 @@ function processStockData(dataset) {
     }
 }
 
-
 function updateList(stocks, i, res) {
 
     return new Promise(function(resolve, reject) {
@@ -137,8 +137,7 @@ function updateList(stocks, i, res) {
             }, function rejected(err) {
                 console.error(err);
             })
-
-
+            
             .then(function fulfilled() {
                 if (i === stocks.length - 1)
                     resolve();
@@ -150,11 +149,8 @@ function updateList(stocks, i, res) {
     });
 }
 
-
-
 function updateStock(stockcode, data) {
     return new Promise(function(resolve, reject) {
-
         Stock.findOneAndUpdate({ '_id': stockcode }, { 'updated': new Date().toDateString(), 'data': processStockData(data) })
             .exec(function(err, result) {
                 if (err)

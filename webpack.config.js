@@ -8,5 +8,15 @@ module.exports = {
         filename: 'bundle.js',
         path: path.resolve(__dirname + '/public/js')
     },
-    watch: true
+    watch: true,
+
+    module: {
+        loaders: [
+            {
+                test: /\.scss$/,
+                loader: 'style-loader!css-loader!sass-loader'
+            }
+
+        ]
+    }
 };

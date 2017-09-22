@@ -18,7 +18,6 @@ module.exports = function(io, socket) {
             //add data to database
             .then(function fulfilled(result) {
                 return dataHandler.addStock(stockcode, result);
-                //dataHandler.getList();
             }, function rejected(err) {
                 if (err === 'Invalid stockcode!') {
                     socket.emit('invalid', err);
@@ -28,20 +27,19 @@ module.exports = function(io, socket) {
 
             //emit result
             .then(function fulfilled(result) {
-                dataHandler.findStocks()
+                dataHandler.findStock(stockcode)
                 .then(function fulfilled(result){
                     io.sockets.emit('add', result);    
                 });
             }, function(err) {
                 if (err) throw err;
             });
-
         });
 
         socket.on('delete', function(stockcode) {
             dataHandler.delStock(stockcode)
-            .then(function fulfilled(result){
-                 io.sockets.emit('delete', result);
+            .then(function fulfilled(){
+                 io.sockets.emit('delete', stockcode);
             });
         });
         

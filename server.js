@@ -13,7 +13,6 @@ require('dotenv').load();
 mongoose.connect(process.env.MONGO_URI, { useMongoClient: true });
 mongoose.Promise = global.Promise;
 
-app.use('/public', express.static(path + '/public'));
 app.use('/common', express.static(path + '/app/common'));
 app.use('/server', express.static(path + '/app/server'));
 app.use('/client', express.static(path + '/app/client'));

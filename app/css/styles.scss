@@ -1,0 +1,258 @@
+$light-blue: #15a4fa;
+$midnight-blue: #1c324a;
+$bg-blue: #384d67;
+$absolute: absolute;
+$relative: relative;
+
+@mixin main-color($color) {
+    color: $color;
+}
+
+@mixin bg-color($color) {
+    background-color: $color;
+}
+
+@mixin margin-auto {
+    margin: 0 auto;
+}
+
+@mixin width-100pc {
+    width: 100%;
+}
+
+@mixin maxwidth-1080{
+    max-width: 1080px;
+}
+
+@mixin axes-text {
+    text {
+        font-size: 12px;
+        fill: $light-blue;
+    }
+}
+
+@mixin indented-text {
+    text-indent: 10px;
+}
+
+@mixin index-z {
+    z-index: 10px;
+}
+
+@mixin boxsize-border {
+    box-sizing: border-box;
+}
+
+@mixin shared-style1 {
+    height: 100%;
+    border-style: none;
+}
+
+@mixin pos($pos) {
+    position: $pos;
+}
+
+body {
+    @include bg-color($bg-blue);
+}
+
+#app {
+
+    @include width-100pc;
+    @include margin-auto;
+    margin-top: 5em;
+    display: grid;
+    grid-gap: 1em;
+}
+
+.panel {
+    border: 0;
+    @include bg-color($midnight-blue);
+}
+
+.panel-heading {
+    @include bg-color($light-blue);
+}
+
+.panel-title {
+    font: {
+        size: 30px;
+        weight: bold;
+    }
+}
+
+.panel-body {
+    padding: 0;
+}
+
+#panel-group {
+    @include width-100pc;
+    @include margin-auto;
+    padding: 0;
+    display: grid;
+    grid: {
+        row-gap: 1em;
+        column-gap: 2em;
+        auto-rows: minmax(40px, auto);
+    }
+}
+
+
+/*chart*/
+
+.svg {
+    @include width-100pc;
+    height: 450px;
+}
+
+.line {
+    fill: none;
+    stroke: $midnight-blue;
+    stroke: {
+        width: 2;
+        linejoin: round;
+        linecap: round;
+    }
+}
+
+
+/*axes*/
+
+#axisX {
+    @include axes-text;
+    line,
+    path {
+        stroke: $bg-blue;
+    }
+}
+
+#axisY {
+    @include axes-text;
+    stroke-opacity: 0;
+}
+
+
+/*tooltip*/
+
+.overlay {
+    fill: none;
+    pointer-events: all;
+}
+
+#scanline {
+    stroke: $light-blue;
+    stroke-width: 1;
+}
+
+circle {
+    r: 7;
+    opacity: 0.6;
+}
+
+#tooltip {
+    @include index-z;
+    @include pos($absolute);
+    @include bg-color(rgba(56, 77, 103, 0.6));
+    @include main-color(#bdc3c7);
+    width: 110px;
+    border-radius: 5px;
+    border: 1px solid $light-blue;
+    padding: 0.5em;
+    font-size: 10px;
+}
+
+#tip-date {
+    font-size: 12px;
+}
+
+.span-text {
+    @include main-color(#bdc3c7);
+}
+
+#highlight {
+    @include index-z;
+}
+
+
+/*buttons*/
+
+#add {
+    @include boxsize-border;
+    @include shared-style1;
+    cursor: pointer;
+}
+
+#add-btn {
+    @include shared-style1;
+}
+
+#input {
+    @include shared-style1;
+    @include bg-color($midnight-blue);
+    @include main-color($light-blue);
+    @include indented-text;
+}
+
+
+#add-btn {
+    @include bg-color($light-blue);
+    @include main-color($bg-blue);
+    padding: 0 2em 0 2em;
+    font-weight: bold;
+}
+
+.label-text {
+    @include indented-text;
+}
+
+.stock {
+    @include boxsize-border;
+    @include pos($relative);
+    @include bg-color($midnight-blue);
+    @include main-color($light-blue);
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.close {
+    @include pos($absolute);
+    top: 8px;
+    right: 10px;
+}
+
+.close-icon {
+    @include main-color(rgba(0, 0, 0, 0));
+}
+
+::-webkit-input-placeholder {
+    @include main-color($bg-blue);
+}
+
+::-moz-placeholder {
+    @include main-color($bg-blue);
+}
+
+:-ms-input-placeholder {
+    @include main-color($bg-blue);
+}
+
+:-moz-placeholder {
+    @include main-color($bg-blue);
+}
+
+@media screen and (min-width: 768px) {
+    #panel-group {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media screen and (min-width: 992px) {
+    #app {
+        @include maxwidth-1080;
+    }
+
+    #panel-group {
+        @include maxwidth-1080;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}

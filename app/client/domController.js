@@ -1,15 +1,19 @@
 'use strict';
 
 var addButton = document.querySelector('#add-btn');
-var input = document.querySelector('#input');
 var panelGroup = document.querySelector('#panel-group');
 
 var dom = {
 
-    generatePanels: function(dataset) {
-        dataset.forEach(function(stock) {
-            addPanel(stock._id);
-        });
+    addPanel: function(stockcode) {
+        createPanel(stockcode);
+    },
+    
+    addTip: function(stockcode) {
+        let tipStocks = document.querySelector('#tip-group');
+        let tipBox = document.createElement('div');
+        tipBox.setAttribute('id', stockcode + '_TIP');
+        tipStocks.appendChild(tipBox);
     },
 
     deletePanel: function(stockcode) {
@@ -17,32 +21,20 @@ var dom = {
         panelGroup.removeChild(panel);
     },
 
-    emitInput: function(fn, e) {
-        if (typeof fn !== 'function') {
-            console.error('Not a function!');
-        }
+    deleteTip: function(stockcode) {
+        let focusGroup = document.querySelector('#focus-group');
+        let focus = document.querySelector('#' + stockcode + '_FOCUS');
+        focusGroup.removeChild(focus);
 
-        input.placeholder = 'Stockcode';
-        
-        //check stock is already listed
-        if (document.querySelector('#' + input.value.toUpperCase())) {
-            input.value = '';
-        }
-        else if (input.value) {
-            fn('add', input.value);
-            input.value = '';
-        }
+        let tipGroup = document.querySelector('#tip-group');
+        let tip = document.querySelector('#' + stockcode + '_TIP');
+        tipGroup.removeChild(tip);
     },
-
-    setInput: function(message) {
-        input.placeholder = message;
-    },
-  
 };
 
 module.exports = dom;
 
-function addPanel(stockcode) {
+function createPanel(stockcode) {
     if (!document.querySelector('#' + stockcode)) {
         let panel = document.createElement('div');
         panel.setAttribute('class', 'stock');

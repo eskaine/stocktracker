@@ -1,89 +1,119 @@
 'use strict';
 
+require('../common/styles');
+
 var socket = io.connect('https://stocktracker-eskaine.c9users.io/');
 var ajax = require('../common/ajax-functions');
 var dom = require('./domController');
-var property = require('./attrController');
-var draw = require('./drawController');
+var property = require('./propertyController');
+var chart = require('./chartController');
 
+var input = document.querySelector('#input');
+var url = window.location.origin + '/list';
 (function() {
-    var url = window.location.origin + '/list';
-
-    function loadChartData() {
-        ajax.ajaxRequest('GET', url, function(result) {
-            if (result) {
-                result = JSON.parse(result);
-                draw.lineChart(result);
-                dom.generatePanels(result);
-            }
-        });
-    }
-
-
-    /*
-    WINDOW EVENTS
-    */
-
+    
     //onload
     ajax.ready(function() {
-        draw.baseChart();
-        loadChartData();
+        ajax.ajaxRequest('GET', url, function(result) {
+            onLoad(result)
+        });
     });
-
-    //resize
-    d3.select(window).on('resize', function() {
-        draw.axisX();
-        draw.lineChart();
-    });
-
-
-
-    /*
-    SOCKET EVENTS
-    */
 
     socket.on('add', function(result) {
-        draw.lineChart(result);
-        dom.generatePanels(result);
+        onAdd(result);
     });
 
     socket.on('delete', function(result) {
-        //reset axis y cap
-        property.setMaxPrice(0);
-        draw.lineChart(result);
+        onDelete(result);
     });
 
     socket.on('invalid', function(result) {
-        dom.setInput(result);
+        input.placeholder = result;
     });
 
-
-
-    /*
-    BUTTON EVENTS
-    */
-
     //enter keypress
-    document.querySelector('#input').addEventListener('keypress', function(e) {
+    input.addEventListener('keypress', function(e) {
         if (e.keyCode === 13) {
-            dom.emitInput(emitStockCode);
+            emitData();
         }
     });
 
     document.querySelector('#add-btn').addEventListener('click', function() {
-        dom.emitInput(emitStockCode);
+        emitData();
     });
 
     //close/delete stock
     document.addEventListener('click', function(e) {
         if (e.target.parentElement.className === 'close') {
-            emitStockCode('delete', e.target.parentElement.parentElement.id);
-            dom.deletePanel(e.target.parentElement.parentElement.id);
+            socket.emit('delete', e.target.parentElement.parentElement.id.toUpperCase());
         }
     });
-
-    function emitStockCode(emitType, emitValue) {
-        socket.emit(emitType, emitValue.toUpperCase());
-    }
-
 })();
+
+function emitData() {
+    input.placeholder = 'Stockcode';
+
+    //check stock is already listed
+    if (document.querySelector('#' + input.value.toUpperCase())) {
+        input.value = '';
+    }
+    else if (input.value) {
+        socket.emit('add', input.value.toUpperCase());
+        input.value = '';
+    }
+}
+
+function onLoad(result) {
+    if (result) {
+        let dataset;
+        result = JSON.parse(result);
+        
+        chart.parseData(result)
+            .then(function fulfilled(parsedData) {
+                dataset = parsedData;
+                chart.drawAxis(parsedData);
+            })
+            .then(function fulfilled() {
+                for (var i in dataset) {
+                    chart.drawStock(dataset[i]);
+                }
+            });
+    }
+}
+
+function onAdd(result) {
+    let dataset;
+    chart.parseData(result)
+        .then(function fulfilled(parsedData) {
+            dataset = parsedData;
+            return chart.drawAxis(parsedData);
+        })
+        .then(function fulfilled(redraw) {
+            if (redraw) {
+                chart.redrawChart();
+                chart.drawFocus(dataset[0]);
+                dom.addTip(dataset[0]._id);
+                dom.addPanel(dataset[0]._id);
+            }
+            else {
+                chart.drawStock(dataset[0]);
+            }
+           
+        });
+}
+
+function onDelete(stockcode) {
+    chart.deleteData(stockcode)
+        .then(function fulfilled(isHighest) {
+
+            if (isHighest) {
+                //reset current max price
+                property.setMaxPrice(0);
+
+                chart.drawAxis()
+                    .then(function fulfilled() {
+                        chart.redrawChart();
+                    });
+            }
+        });
+}
